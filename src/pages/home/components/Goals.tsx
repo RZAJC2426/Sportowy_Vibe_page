@@ -14,6 +14,11 @@ const GOAL_SUBS_10K = 10000;
 const GOAL_VIEWS_10M = 10000000;
 const GOAL_SILVER_100K = 100000;
 
+// Ostatnie znane wartości sprzed usunięcia kanału — pokazywane gdy YouTube API nie odpowiada,
+// żeby paski nie wyglądały na zepsute (zamrożone na 0%) tylko na "ostatni znany stan".
+const FALLBACK_SUBS = 2700;
+const FALLBACK_VIEWS = 1500000;
+
 function calcPct(current: number, goal: number): number {
   if (current <= 0 || goal <= 0) return 0;
   return Math.min(Math.round((current / goal) * 100), 100);
@@ -26,6 +31,15 @@ export default function Goals() {
   const [views, setViews] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isFallback, setIsFallback] = useState(false);
+
+  const useFallback = useCallback((reason: string) => {
+    console.error('[Goals] YouTube stats fetch failed:', reason);
+    setSubs(FALLBACK_SUBS);
+    setViews(FALLBACK_VIEWS);
+    setIsFallback(true);
+    setErrorMsg(null);
+  }, []);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -34,12 +48,12 @@ export default function Goals() {
       });
 
       if (fnError) {
-        setErrorMsg(`Błąd połączenia: ${fnError.message || 'nieznany'}`);
+        useFallback(fnError.message || 'nieznany błąd połączenia');
         return;
       }
 
       if (data?.error) {
-        setErrorMsg(data.error);
+        useFallback(data.error);
         return;
       }
 
@@ -47,17 +61,17 @@ export default function Goals() {
         setSubs(data.subscriberCount);
         setViews(data.viewCount ?? null);
         setErrorMsg(null);
+        setIsFallback(false);
       } else {
-        setErrorMsg('Brak danych subskrybentów w odpowiedzi');
+        useFallback('brak danych subskrybentów w odpowiedzi');
       }
     } catch (err) {
-      console.error('[Goals] YouTube stats fetch failed:', err);
       const msg = err instanceof Error ? err.message : 'nieznany';
-      setErrorMsg(`Wyjątek: ${msg}`);
+      useFallback(msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [useFallback]);
 
   useEffect(() => {
     fetchStats();
@@ -159,11 +173,18 @@ export default function Goals() {
                 {t('goals.loading')}
               </span>
             )}
-            {!loading && subs !== null && (
+            {!loading && subs !== null && !isFallback && (
               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-600">
                 <i className="ri-user-fill text-[10px]"></i>
                 {formatNum(currentSubs)} {t('goals.subscribers')}
                 <span className="ml-1 text-[10px] text-primary-400">● {t('goals.live')}</span>
+              </span>
+            )}
+            {!loading && isFallback && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600">
+                <i className="ri-time-line text-[10px]"></i>
+                {formatNum(currentSubs)} {t('goals.subscribers')}
+                <span className="ml-1 text-[10px] text-amber-500">· ostatnia znana wartość</span>
               </span>
             )}
             {!loading && errorMsg && (
@@ -204,7 +225,11 @@ export default function Goals() {
         {!loading && subs !== null && (
           <p data-anim className="mt-4 text-center text-[11px] text-foreground-400">
             {t('goals.footer')}
-            <span> · {t('goals.last_update')} {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</span>
+            {isFallback ? (
+              <span> · dane z ostatniej dostępnej aktualizacji</span>
+            ) : (
+              <span> · {t('goals.last_update')} {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</span>
+            )}
           </p>
         )}
       </div>
