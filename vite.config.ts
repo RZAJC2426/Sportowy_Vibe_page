@@ -75,13 +75,15 @@ export default defineConfig({
     outDir: 'out',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-router': ['react-router-dom'],
-          'vendor-i18n': ['i18next', 'react-i18next'],
-          'vendor-gsap': ['gsap'],
-          'vendor-recharts': ['recharts'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router-dom')) return 'vendor-router';
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+            if (id.includes('i18next')) return 'vendor-i18n';
+            if (id.includes('gsap')) return 'vendor-gsap';
+            if (id.includes('recharts')) return 'vendor-recharts';
+            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+          }
         },
       },
     },
