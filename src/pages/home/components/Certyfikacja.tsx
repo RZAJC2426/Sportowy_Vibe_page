@@ -109,19 +109,19 @@ export default function Certyfikacja() {
               </p>
               <ul className="space-y-2 text-left">
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">♿</span>
+                  <span className="mt-0.5 shrink-0"></span>
                   <EditableText contentKey="home_certyfikacja_desc_item_1" fallback="Wyrównany dostęp – pełna otwartość dla osób z niepełnosprawnościami.">
                     Wyrównany dostęp – pełna otwartość dla osób z niepełnosprawnościami.
                   </EditableText>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">🌍</span>
+                  <span className="mt-0.5 shrink-0"></span>
                   <EditableText contentKey="home_certyfikacja_desc_item_2" fallback="Międzynarodowy prestiż – budowanie zaufania wśród zagranicznych partnerów.">
                     Międzynarodowy prestiż – budowanie zaufania wśród zagranicznych partnerów.
                   </EditableText>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">🤝</span>
+                  <span className="mt-0.5 shrink-0"></span>
                   <EditableText contentKey="home_certyfikacja_desc_item_3" fallback="Lepszy wizerunek – potwierdzenie najwyższych standardów obsługi i infrastruktury.">
                     Lepszy wizerunek – potwierdzenie najwyższych standardów obsługi i infrastruktury.
                   </EditableText>
