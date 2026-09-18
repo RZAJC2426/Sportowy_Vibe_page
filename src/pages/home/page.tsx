@@ -41,7 +41,7 @@ export default function Home() {
             ],
             sameAs: [
               'https://www.youtube.com/@sportowy_vibe',
-              'https://www.facebook.com/SportowyVIBE/,
+              'https://www.facebook.com/SportowyVIBE/',
               'https://www.instagram.com/sportowy_vibe',
             ],
             areaServed: {
