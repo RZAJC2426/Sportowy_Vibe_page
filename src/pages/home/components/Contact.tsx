@@ -176,7 +176,7 @@ export default function Contact() {
                   <EditableIcon contentKey="home_icon_contact_social_yt" fallbackIcon="ri-youtube-line" className="text-foreground-400 group-hover:text-red-500 text-xl transition-colors" />
                 </a>
                 <a
-                  href="https://www.facebook.com/RSNSWP"
+                  href="https://www.facebook.com/SportowyVIBE/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-10 w-10 items-center justify-center rounded-lg bg-background-200 transition-all hover:bg-primary-50"
