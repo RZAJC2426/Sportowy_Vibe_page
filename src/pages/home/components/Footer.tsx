@@ -64,7 +64,7 @@ export default function Footer() {
           <a href="https://www.youtube.com/@sportowy_vibe" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors" aria-label="YouTube">
             <EditableIcon contentKey="footer_icon_youtube" fallbackIcon="ri-youtube-fill" className="text-lg" />
           </a>
-          <a href="https://www.facebook.com/sportowy_vibe" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors" aria-label="Facebook">
+          <a href="https://www.facebook.com/SportowyVIBE/" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors" aria-label="Facebook">
             <EditableIcon contentKey="footer_icon_facebook" fallbackIcon="ri-facebook-fill" className="text-lg" />
           </a>
           <a href="https://www.instagram.com/sportowy_vibe" target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors" aria-label="Instagram">
