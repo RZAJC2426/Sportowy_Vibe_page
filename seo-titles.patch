@@ -1,0 +1,599 @@
+From 3548598c471c70a55b757847c55c2753b2a71f32 Mon Sep 17 00:00:00 2001
+From: x <x@x>
+Date: Wed, 18 Nov 2026 20:09:35 +0000
+Subject: [PATCH] SEO: useSeo hook, tytuly i opisy podstron, canonical, noindex
+ dla stron prywatnych
+
+---
+ src/hooks/useSeo.ts                      | 101 +++++++++++++++++++++++
+ src/pages/admin/page.tsx                 |   2 +
+ src/pages/aktualnosci/page.tsx           |   2 +
+ src/pages/artykul/page.tsx               |  84 ++-----------------
+ src/pages/certyfikacja/page.tsx          |   2 +
+ src/pages/dyscyplina/page.tsx            |   6 ++
+ src/pages/harmonogram-kanalu/page.tsx    |   2 +
+ src/pages/nasz-kanal/aktualnosc/page.tsx |   2 +
+ src/pages/nasz-kanal/page.tsx            |   2 +
+ src/pages/nasze-filmy/page.tsx           |   2 +
+ src/pages/o-nas/historia.tsx             |   2 +
+ src/pages/o-nas/moderatorzy.tsx          |   2 +
+ src/pages/o-nas/page.tsx                 |   2 +
+ src/pages/o-nas/tworcy.tsx               |   2 +
+ src/pages/o-nas/wspolpraca.tsx           |   2 +
+ src/pages/polityka-prywatnosci/page.tsx  |   2 +
+ src/pages/regulamin-serwisu/page.tsx     |   2 +
+ src/pages/reset-hasla/page.tsx           |   2 +
+ src/pages/rodo/page.tsx                  |   2 +
+ src/pages/strefa-kibica/page.tsx         |   2 +
+ src/pages/ustawienia-konta/page.tsx      |   2 +
+ src/pages/weryfikacja-email/page.tsx     |   2 +
+ 22 files changed, 154 insertions(+), 75 deletions(-)
+ create mode 100644 src/hooks/useSeo.ts
+
+diff --git a/src/hooks/useSeo.ts b/src/hooks/useSeo.ts
+new file mode 100644
+index 0000000..c484f1c
+--- /dev/null
++++ b/src/hooks/useSeo.ts
+@@ -0,0 +1,101 @@
++import { useEffect } from 'react';
++import { useLocation } from 'react-router-dom';
++
++export const SITE_URL = 'https://sportowyvibe.pl';
++const SITE_NAME = 'Sportowy Vibe';
++const MAX_DESCRIPTION = 158;
++
++interface SeoOptions {
++  /** Tytuł podstrony. Gdy undefined (np. dane jeszcze się ładują), hook niczego nie zmienia. */
++  title?: string;
++  description?: string | null;
++  image?: string | null;
++  type?: 'website' | 'article';
++  noindex?: boolean;
++}
++
++function clip(text: string, max = MAX_DESCRIPTION): string {
++  const clean = text.replace(/\s+/g, ' ').trim();
++  if (clean.length <= max) return clean;
++  const cut = clean.slice(0, max - 1);
++  const lastSpace = cut.lastIndexOf(' ');
++  const base = lastSpace > 80 ? cut.slice(0, lastSpace) : cut;
++  return base.replace(/[.,;:\-–—\s]+$/, '') + '…';
++}
++
++function absoluteUrl(url: string): string {
++  if (/^https?:\/\//i.test(url)) return url;
++  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
++}
++
++type Undo = () => void;
++
++function setHeadTag(
++  tag: 'meta' | 'link',
++  attr: string,
++  key: string,
++  valueAttr: 'content' | 'href',
++  value: string,
++): Undo {
++  let el = document.head.querySelector<HTMLElement>(`${tag}[${attr}="${key}"]`);
++  const existed = !!el;
++  const previous = el?.getAttribute(valueAttr) ?? null;
++  if (!el) {
++    el = document.createElement(tag);
++    el.setAttribute(attr, key);
++    document.head.appendChild(el);
++  }
++  el.setAttribute(valueAttr, value);
++  return () => {
++    if (!existed) el?.remove();
++    else if (previous === null) el?.removeAttribute(valueAttr);
++    else el?.setAttribute(valueAttr, previous);
++  };
++}
++
++/**
++ * Ustawia title, description, canonical oraz og:* / twitter:* dla bieżącej podstrony
++ * i przy wyjściu ze strony przywraca poprzednie wartości (SPA nie przeładowuje head).
++ */
++export function useSeo({ title, description, image, type = 'website', noindex = false }: SeoOptions) {
++  const { pathname } = useLocation();
++
++  useEffect(() => {
++    if (!title) return;
++
++    const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
++    const desc = description ? clip(description) : null;
++    const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : '/';
++    const canonical = `${SITE_URL}${path === '/' ? '/' : path}`;
++    const img = image ? absoluteUrl(image) : null;
++
++    const undo: Undo[] = [];
++    const previousTitle = document.title;
++    document.title = fullTitle;
++    undo.push(() => { document.title = previousTitle; });
++
++    undo.push(setHeadTag('link', 'rel', 'canonical', 'href', canonical));
++    undo.push(setHeadTag('meta', 'property', 'og:title', 'content', fullTitle));
++    undo.push(setHeadTag('meta', 'property', 'og:url', 'content', canonical));
++    undo.push(setHeadTag('meta', 'property', 'og:type', 'content', type));
++    undo.push(setHeadTag('meta', 'name', 'twitter:title', 'content', fullTitle));
++
++    if (desc) {
++      undo.push(setHeadTag('meta', 'name', 'description', 'content', desc));
++      undo.push(setHeadTag('meta', 'property', 'og:description', 'content', desc));
++      undo.push(setHeadTag('meta', 'name', 'twitter:description', 'content', desc));
++    }
++    if (img) {
++      undo.push(setHeadTag('meta', 'property', 'og:image', 'content', img));
++      undo.push(setHeadTag('meta', 'name', 'twitter:image', 'content', img));
++      undo.push(setHeadTag('meta', 'name', 'twitter:card', 'content', 'summary_large_image'));
++    }
++    if (noindex) {
++      undo.push(setHeadTag('meta', 'name', 'robots', 'content', 'noindex, nofollow'));
++    }
++
++    return () => {
++      undo.reverse().forEach((fn) => fn());
++    };
++  }, [title, description, image, type, noindex, pathname]);
++}
+diff --git a/src/pages/admin/page.tsx b/src/pages/admin/page.tsx
+index 990d70d..2ebfdea 100644
+--- a/src/pages/admin/page.tsx
++++ b/src/pages/admin/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState } from 'react';
+ import EditableImage from '@/components/feature/EditableImage';
+ import { Link, useNavigate, Navigate } from 'react-router-dom';
+@@ -21,6 +22,7 @@ import EmailTemplatesManager from './components/EmailTemplatesManager';
+ type AdminTab = 'dashboard' | 'articles' | 'channel-news' | 'users' | 'disciplines' | 'content' | 'moderators' | 'partners' | 'colors' | 'images' | 'email-templates';
+ 
+ export default function AdminPage() {
++  useSeo({ title: 'Panel administracyjny', noindex: true });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+   const { user, profile, isAdmin, loading, sessionWarning, sessionExpired, refreshSession } = useAuth();
+diff --git a/src/pages/aktualnosci/page.tsx b/src/pages/aktualnosci/page.tsx
+index 3fd1847..be33580 100644
+--- a/src/pages/aktualnosci/page.tsx
++++ b/src/pages/aktualnosci/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useEffect, useState } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -17,6 +18,7 @@ import {
+ } from '@/data/disciplines';
+ 
+ export default function AktualnosciPage() {
++  useSeo({ title: 'Aktualności sportowe', description: 'Najnowsze artykuły i informacje z dyscyplin sportowych, które pokrywamy, oraz ogłoszenia kanału Sportowy Vibe.' });
+   const { t } = useTranslation('common');
+   const navigate = useNavigate();
+   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+diff --git a/src/pages/artykul/page.tsx b/src/pages/artykul/page.tsx
+index f9d0c72..c3f9a2b 100644
+--- a/src/pages/artykul/page.tsx
++++ b/src/pages/artykul/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate, useParams } from 'react-router-dom';
+ import { fetchArticleBySlug, fetchArticlesByDiscipline, fetchPopularArticles, type Article } from '@/data/articles';
+ import { useEffect, useState, useMemo } from 'react';
+@@ -99,6 +100,13 @@ export default function ArtykulPage() {
+ 
+   const [resolvedImageUrl, setResolvedImageUrl] = useState<string>('');
+ 
++  useSeo({
++    title: article?.title,
++    description: article?.summary,
++    image: resolvedImageUrl || article?.image,
++    type: 'article',
++  });
++
+   useEffect(() => {
+     if (!slug) { setLoading(false); return; }
+     let cancelled = false;
+@@ -107,63 +115,7 @@ export default function ArtykulPage() {
+       if (cancelled) return;
+       setArticle(art);
+       if (art) {
+-        document.title = `${art.title} — Sportowy Vibe`;
+-        let metaDesc = document.querySelector('meta[name="description"]');
+-        if (!metaDesc) {
+-          metaDesc = document.createElement('meta');
+-          metaDesc.setAttribute('name', 'description');
+-          document.head.appendChild(metaDesc);
+-        }
+-        metaDesc.setAttribute('content', art.summary);
+-        let ogTitle = document.querySelector('meta[property="og:title"]');
+-        if (!ogTitle) {
+-          ogTitle = document.createElement('meta');
+-          ogTitle.setAttribute('property', 'og:title');
+-          document.head.appendChild(ogTitle);
+-        }
+-        ogTitle.setAttribute('content', art.title);
+-        let ogDesc = document.querySelector('meta[property="og:description"]');
+-        if (!ogDesc) {
+-          ogDesc = document.createElement('meta');
+-          ogDesc.setAttribute('property', 'og:description');
+-          document.head.appendChild(ogDesc);
+-        }
+-        ogDesc.setAttribute('content', art.summary);
+-        let ogImage = document.querySelector('meta[property="og:image"]');
+-        if (!ogImage) {
+-          ogImage = document.createElement('meta');
+-          ogImage.setAttribute('property', 'og:image');
+-          document.head.appendChild(ogImage);
+-        }
+-        ogImage.setAttribute('content', art.image);
+-        let ogUrl = document.querySelector('meta[property="og:url"]');
+-        if (!ogUrl) {
+-          ogUrl = document.createElement('meta');
+-          ogUrl.setAttribute('property', 'og:url');
+-          document.head.appendChild(ogUrl);
+-        }
+-        ogUrl.setAttribute('content', `${window.location.origin}/artykul/${art.slug}`);
+-        let twitterCard = document.querySelector('meta[name="twitter:card"]');
+-        if (!twitterCard) {
+-          twitterCard = document.createElement('meta');
+-          twitterCard.setAttribute('name', 'twitter:card');
+-          document.head.appendChild(twitterCard);
+-        }
+-        twitterCard.setAttribute('content', 'summary_large_image');
+-        let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+-        if (!twitterTitle) {
+-          twitterTitle = document.createElement('meta');
+-          twitterTitle.setAttribute('name', 'twitter:title');
+-          document.head.appendChild(twitterTitle);
+-        }
+-        twitterTitle.setAttribute('content', art.title);
+-        let twitterImage = document.querySelector('meta[name="twitter:image"]');
+-        if (!twitterImage) {
+-          twitterImage = document.createElement('meta');
+-          twitterImage.setAttribute('name', 'twitter:image');
+-          document.head.appendChild(twitterImage);
+-        }
+-        twitterImage.setAttribute('content', art.image);
++
+ 
+         const all = await fetchArticlesByDiscipline(art.disciplineSlug);
+         if (!cancelled) {
+@@ -194,24 +146,6 @@ export default function ArtykulPage() {
+     }).catch(() => {});
+   }, [article]);
+ 
+-  useEffect(() => {
+-    if (!resolvedImageUrl) return;
+-    let ogImage = document.querySelector('meta[property="og:image"]');
+-    if (!ogImage) {
+-      ogImage = document.createElement('meta');
+-      ogImage.setAttribute('property', 'og:image');
+-      document.head.appendChild(ogImage);
+-    }
+-    ogImage.setAttribute('content', resolvedImageUrl);
+-    let twitterImage = document.querySelector('meta[name="twitter:image"]');
+-    if (!twitterImage) {
+-      twitterImage = document.createElement('meta');
+-      twitterImage.setAttribute('name', 'twitter:image');
+-      document.head.appendChild(twitterImage);
+-    }
+-    twitterImage.setAttribute('content', resolvedImageUrl);
+-  }, [resolvedImageUrl]);
+-
+   const shareUrls = useMemo(() => {
+     if (!article) return null;
+     const shareImage = resolvedImageUrl || article.image;
+diff --git a/src/pages/certyfikacja/page.tsx b/src/pages/certyfikacja/page.tsx
+index 5ffe3fe..ab409a7 100644
+--- a/src/pages/certyfikacja/page.tsx
++++ b/src/pages/certyfikacja/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -32,6 +33,7 @@ const BENEFIT_ICONS = [
+ const CERT_SVG_URL = 'https://storage.readdy-site.link/project_files/6b577641-b4ea-4107-bb56-5f8fbbf97e07/2b55db67-77b9-4e27-9f52-71dae827bcde_Certyfikat_Sport_Bez_Barier_Logos_Final.svg';
+ 
+ export default function CertyfikacjaPage() {
++  useSeo({ title: 'Certyfikacja obiektów sportowych', description: 'Oficjalne potwierdzenie, że stadion, hala lub arena spełnia międzynarodowe standardy dostępności.' });
+   const navigate = useNavigate();
+   const { t } = useTranslation();
+ 
+diff --git a/src/pages/dyscyplina/page.tsx b/src/pages/dyscyplina/page.tsx
+index cbd5dec..578cce2 100644
+--- a/src/pages/dyscyplina/page.tsx
++++ b/src/pages/dyscyplina/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate, useParams } from 'react-router-dom';
+ import { useEffect, useState } from 'react';
+ import { useTranslation } from 'react-i18next';
+@@ -202,6 +203,11 @@ export default function DyscyplinaPage() {
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState(false);
+   const [heroAnim, setHeroAnim] = useState(false);
++  useSeo({
++    title: data ? `${data.name}: najnowsze artykuły` : undefined,
++    description: data ? (data.description || `Najnowsze artykuły, wyniki i analizy z dyscypliny: ${data.name}. Sportowy Vibe.`) : undefined,
++    image: data?.heroImage ?? data?.cardImage ?? undefined,
++  });
+ 
+   usePageVisit(slug ? `/dyscyplina/${slug}` : '');
+ 
+diff --git a/src/pages/harmonogram-kanalu/page.tsx b/src/pages/harmonogram-kanalu/page.tsx
+index e6ed7a0..947855b 100644
+--- a/src/pages/harmonogram-kanalu/page.tsx
++++ b/src/pages/harmonogram-kanalu/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useEffect, useState } from 'react';
+ import { useTranslation } from 'react-i18next';
+@@ -27,6 +28,7 @@ function formatTime(isoTime: string): string {
+ }
+ 
+ export default function HarmonogramKanaluPage() {
++  useSeo({ title: 'Harmonogram kanału', description: 'Zaplanowane wydarzenia na kanale Sportowy Vibe: transmisje na żywo, magazyny i analizy. Sprawdź, co nas czeka.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+   const { user, isAdmin } = useAuth();
+diff --git a/src/pages/nasz-kanal/aktualnosc/page.tsx b/src/pages/nasz-kanal/aktualnosc/page.tsx
+index fbfcd2b..1f4050e 100644
+--- a/src/pages/nasz-kanal/aktualnosc/page.tsx
++++ b/src/pages/nasz-kanal/aktualnosc/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate, useParams } from 'react-router-dom';
+ import { fetchChannelNewsById, fetchAllChannelNews, type ChannelNewsItem } from '@/data/disciplines';
+ import { useEffect, useState } from 'react';
+@@ -15,6 +16,7 @@ export default function AktualnoscKanaluPage() {
+ 
+   const { id } = useParams<{ id: string }>();
+   const [news, setNews] = useState<ChannelNewsItem | null>(null);
++  useSeo({ title: news?.title, description: news?.description });
+   const [allNews, setAllNews] = useState<ChannelNewsItem[]>([]);
+   const [loading, setLoading] = useState(true);
+ 
+diff --git a/src/pages/nasz-kanal/page.tsx b/src/pages/nasz-kanal/page.tsx
+index 7f5d225..6e29a60 100644
+--- a/src/pages/nasz-kanal/page.tsx
++++ b/src/pages/nasz-kanal/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useEffect, useState } from 'react';
+ import { useTranslation } from 'react-i18next';
+@@ -10,6 +11,7 @@ import EditableImage from '@/components/feature/EditableImage';
+ import Breadcrumbs from '@/components/feature/Breadcrumbs';
+ 
+ export default function NaszKanalPage() {
++  useSeo({ title: 'Nasz kanał', description: 'Relacje, analizy, transmisje i autorskie formaty. Sportowy Vibe tworzą pasjonaci sportu dla pasjonatów.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+   const [channelNews, setChannelNews] = useState<ChannelNewsItem[]>([]);
+diff --git a/src/pages/nasze-filmy/page.tsx b/src/pages/nasze-filmy/page.tsx
+index 09b5501..8f536bd 100644
+--- a/src/pages/nasze-filmy/page.tsx
++++ b/src/pages/nasze-filmy/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -103,6 +104,7 @@ type FilterTab = 'wszystko' | 'FILM' | 'SHORTS' | 'LIVE';
+ type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'popular';
+ 
+ export default function NaszeFilmyPage() {
++  useSeo({ title: 'Nasze filmy', description: 'Filmy, shorty i transmisje z kanału Sportowy Vibe na YouTube. Wszystko w jednym miejscu.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+ 
+diff --git a/src/pages/o-nas/historia.tsx b/src/pages/o-nas/historia.tsx
+index 2f0f87f..900a57e 100644
+--- a/src/pages/o-nas/historia.tsx
++++ b/src/pages/o-nas/historia.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+ import TopBar from '@/pages/home/components/TopBar';
+@@ -21,6 +22,7 @@ const EVENT_ICONS = [
+ ];
+ 
+ export default function HistoriaPage() {
++  useSeo({ title: 'Historia kanału', description: 'Historia Sportowy Vibe krok po kroku: od kryzysu przez innowacje aż do miliona odsłon.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+ 
+diff --git a/src/pages/o-nas/moderatorzy.tsx b/src/pages/o-nas/moderatorzy.tsx
+index ed0dec3..2e1c222 100644
+--- a/src/pages/o-nas/moderatorzy.tsx
++++ b/src/pages/o-nas/moderatorzy.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState, useEffect } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -17,6 +18,7 @@ interface Moderator {
+ }
+ 
+ export default function ModeratorzyPage() {
++  useSeo({ title: 'Moderatorzy kanału', description: 'Poznaj moderatorów, którzy dbają o przyjazną atmosferę czatu podczas transmisji Sportowy Vibe.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+   const [moderators, setModerators] = useState<Moderator[]>([]);
+diff --git a/src/pages/o-nas/page.tsx b/src/pages/o-nas/page.tsx
+index a13a6d4..426669a 100644
+--- a/src/pages/o-nas/page.tsx
++++ b/src/pages/o-nas/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+ import TopBar from '@/pages/home/components/TopBar';
+@@ -9,6 +10,7 @@ import Breadcrumbs from '@/components/feature/Breadcrumbs';
+ import { usePageVisit } from '@/hooks/useLikes';
+ 
+ export default function ONasPage() {
++  useSeo({ title: 'O nas', description: 'Poznaj ludzi, historię i partnerów stojących za Sportowy Vibe. Dwa głosy, jedna pasja, zero limitów.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+ 
+diff --git a/src/pages/o-nas/tworcy.tsx b/src/pages/o-nas/tworcy.tsx
+index 6d88dd8..6e600e6 100644
+--- a/src/pages/o-nas/tworcy.tsx
++++ b/src/pages/o-nas/tworcy.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useEffect } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -10,6 +11,7 @@ import Breadcrumbs from '@/components/feature/Breadcrumbs';
+ import { usePageVisit } from '@/hooks/useLikes';
+ 
+ export default function TworcyPage() {
++  useSeo({ title: 'Twórcy', description: 'Poznaj ludzi stojących za Sportowy Vibe: ich pasje, role i to, co sprawia, że razem tworzą kanał.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+ 
+diff --git a/src/pages/o-nas/wspolpraca.tsx b/src/pages/o-nas/wspolpraca.tsx
+index 3d15761..5d66b51 100644
+--- a/src/pages/o-nas/wspolpraca.tsx
++++ b/src/pages/o-nas/wspolpraca.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState, useEffect } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -22,6 +23,7 @@ interface Partner {
+ }
+ 
+ export default function WspolpracaPage() {
++  useSeo({ title: 'Współpraca', description: 'Partnerzy Sportowy Vibe: organizacje, kluby i marki, z którymi tworzymy sportową treść.' });
+   const { t } = useTranslation();
+   const navigate = useNavigate();
+   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+diff --git a/src/pages/polityka-prywatnosci/page.tsx b/src/pages/polityka-prywatnosci/page.tsx
+index 4b8d475..262b547 100644
+--- a/src/pages/polityka-prywatnosci/page.tsx
++++ b/src/pages/polityka-prywatnosci/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useTranslation } from 'react-i18next';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useState, useEffect } from 'react';
+@@ -29,6 +30,7 @@ function ScrollToTop() {
+ }
+ 
+ export default function PrivacyPolicyPage() {
++  useSeo({ title: 'Polityka prywatności', description: 'Zasady przetwarzania danych osobowych w serwisie Sportowy Vibe.' });
+   const navigate = useNavigate();
+   const { i18n } = useTranslation('common');
+   const isPL = i18n.language === 'pl';
+diff --git a/src/pages/regulamin-serwisu/page.tsx b/src/pages/regulamin-serwisu/page.tsx
+index 8034833..ff8135b 100644
+--- a/src/pages/regulamin-serwisu/page.tsx
++++ b/src/pages/regulamin-serwisu/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useTranslation } from 'react-i18next';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useState, useEffect } from 'react';
+@@ -29,6 +30,7 @@ function ScrollToTop() {
+ }
+ 
+ export default function TermsOfServicePage() {
++  useSeo({ title: 'Regulamin serwisu', description: 'Regulamin korzystania z serwisu Sportowy Vibe.' });
+   const navigate = useNavigate();
+   const { i18n } = useTranslation('common');
+   const isPL = i18n.language === 'pl';
+diff --git a/src/pages/reset-hasla/page.tsx b/src/pages/reset-hasla/page.tsx
+index 4cc77d8..84238a5 100644
+--- a/src/pages/reset-hasla/page.tsx
++++ b/src/pages/reset-hasla/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useEffect, useState, useRef } from 'react';
+ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+ import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
+@@ -35,6 +36,7 @@ async function callEdgeFunction(name: string, body: Record<string, unknown>) {
+ }
+ 
+ export default function ResetHaslaPage() {
++  useSeo({ title: 'Reset hasła', noindex: true });
+   const [searchParams] = useSearchParams();
+   const navigate = useNavigate();
+   const token = searchParams.get('token');
+diff --git a/src/pages/rodo/page.tsx b/src/pages/rodo/page.tsx
+index 1519242..5a133c3 100644
+--- a/src/pages/rodo/page.tsx
++++ b/src/pages/rodo/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useTranslation } from 'react-i18next';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useState, useEffect } from 'react';
+@@ -29,6 +30,7 @@ function ScrollToTop() {
+ }
+ 
+ export default function RodoPage() {
++  useSeo({ title: 'Informacja RODO', description: 'Informacje o przetwarzaniu danych osobowych zgodnie z RODO w serwisie Sportowy Vibe.' });
+   const navigate = useNavigate();
+   const { i18n } = useTranslation('common');
+   const isPL = i18n.language === 'pl';
+diff --git a/src/pages/strefa-kibica/page.tsx b/src/pages/strefa-kibica/page.tsx
+index 595db2d..13587fc 100644
+--- a/src/pages/strefa-kibica/page.tsx
++++ b/src/pages/strefa-kibica/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useAuth } from '@/contexts/AuthContext';
+ import { useTranslation } from 'react-i18next';
+@@ -10,6 +11,7 @@ import EditableImage from '@/components/feature/EditableImage';
+ import Breadcrumbs from '@/components/feature/Breadcrumbs';
+ 
+ export default function StrefaKibicaPage() {
++  useSeo({ title: 'Strefa kibica', noindex: true });
+   const { t } = useTranslation('common');
+   const { user, profile } = useAuth();
+   const { theme, toggleTheme } = useTheme();
+diff --git a/src/pages/ustawienia-konta/page.tsx b/src/pages/ustawienia-konta/page.tsx
+index ce5c9da..bae3252 100644
+--- a/src/pages/ustawienia-konta/page.tsx
++++ b/src/pages/ustawienia-konta/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useState, useEffect, useRef } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -69,6 +70,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
+ }
+ 
+ export default function UstawieniaKontaPage() {
++  useSeo({ title: 'Ustawienia konta', noindex: true });
+   const { t } = useTranslation('common');
+   const { user, profile, signOut, hardSignOut, updateUserProfile, deleteAccount, changePassword, changeUsername, hasWebAuthn, registerWebAuthn, removeWebAuthn, sendVerificationCode, verifyCode, verifyCodeAndChangePassword, totpEnabled, setupTOTP, verifyTOTPSetup, disableTOTP, twilioConfigured } = useAuth();
+   const navigate = useNavigate();
+diff --git a/src/pages/weryfikacja-email/page.tsx b/src/pages/weryfikacja-email/page.tsx
+index 694f549..598fa01 100644
+--- a/src/pages/weryfikacja-email/page.tsx
++++ b/src/pages/weryfikacja-email/page.tsx
+@@ -1,3 +1,4 @@
++import { useSeo } from '@/hooks/useSeo';
+ import { useEffect, useState } from 'react';
+ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+ import { useTranslation } from 'react-i18next';
+@@ -36,6 +37,7 @@ async function callEdgeFunction(name: string, body: Record<string, unknown>) {
+ }
+ 
+ export default function WeryfikacjaEmailPage() {
++  useSeo({ title: 'Weryfikacja adresu e-mail', noindex: true });
+   const { t } = useTranslation('common');
+   const [searchParams] = useSearchParams();
+   const navigate = useNavigate();
+-- 
+2.43.0
+

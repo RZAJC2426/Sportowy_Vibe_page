@@ -289,7 +289,7 @@ export default function WeryfikacjaEmailPage() {
       {/* Footer */}
       <footer className="py-4 text-center">
         <p className="text-xs text-foreground-400">
-          &copy; 2025–2026 Sportowy Vibe. Wszelkie prawa zastrzeżone.
+          &copy; 2025-2026 Sportowy Vibe. Wszelkie prawa zastrzeżone.
         </p>
       </footer>
     </div>
