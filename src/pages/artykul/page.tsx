@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchArticleBySlug, fetchArticlesByDiscipline, fetchPopularArticles, type Article } from '@/data/articles';
 import { useEffect, useState, useMemo } from 'react';
@@ -99,6 +100,13 @@ export default function ArtykulPage() {
 
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string>('');
 
+  useSeo({
+    title: article?.title,
+    description: article?.summary,
+    image: resolvedImageUrl || article?.image,
+    type: 'article',
+  });
+
   useEffect(() => {
     if (!slug) { setLoading(false); return; }
     let cancelled = false;
@@ -107,63 +115,7 @@ export default function ArtykulPage() {
       if (cancelled) return;
       setArticle(art);
       if (art) {
-        document.title = `${art.title} — Sportowy Vibe`;
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-          metaDesc = document.createElement('meta');
-          metaDesc.setAttribute('name', 'description');
-          document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute('content', art.summary);
-        let ogTitle = document.querySelector('meta[property="og:title"]');
-        if (!ogTitle) {
-          ogTitle = document.createElement('meta');
-          ogTitle.setAttribute('property', 'og:title');
-          document.head.appendChild(ogTitle);
-        }
-        ogTitle.setAttribute('content', art.title);
-        let ogDesc = document.querySelector('meta[property="og:description"]');
-        if (!ogDesc) {
-          ogDesc = document.createElement('meta');
-          ogDesc.setAttribute('property', 'og:description');
-          document.head.appendChild(ogDesc);
-        }
-        ogDesc.setAttribute('content', art.summary);
-        let ogImage = document.querySelector('meta[property="og:image"]');
-        if (!ogImage) {
-          ogImage = document.createElement('meta');
-          ogImage.setAttribute('property', 'og:image');
-          document.head.appendChild(ogImage);
-        }
-        ogImage.setAttribute('content', art.image);
-        let ogUrl = document.querySelector('meta[property="og:url"]');
-        if (!ogUrl) {
-          ogUrl = document.createElement('meta');
-          ogUrl.setAttribute('property', 'og:url');
-          document.head.appendChild(ogUrl);
-        }
-        ogUrl.setAttribute('content', `${window.location.origin}/artykul/${art.slug}`);
-        let twitterCard = document.querySelector('meta[name="twitter:card"]');
-        if (!twitterCard) {
-          twitterCard = document.createElement('meta');
-          twitterCard.setAttribute('name', 'twitter:card');
-          document.head.appendChild(twitterCard);
-        }
-        twitterCard.setAttribute('content', 'summary_large_image');
-        let twitterTitle = document.querySelector('meta[name="twitter:title"]');
-        if (!twitterTitle) {
-          twitterTitle = document.createElement('meta');
-          twitterTitle.setAttribute('name', 'twitter:title');
-          document.head.appendChild(twitterTitle);
-        }
-        twitterTitle.setAttribute('content', art.title);
-        let twitterImage = document.querySelector('meta[name="twitter:image"]');
-        if (!twitterImage) {
-          twitterImage = document.createElement('meta');
-          twitterImage.setAttribute('name', 'twitter:image');
-          document.head.appendChild(twitterImage);
-        }
-        twitterImage.setAttribute('content', art.image);
+
 
         const all = await fetchArticlesByDiscipline(art.disciplineSlug);
         if (!cancelled) {
@@ -193,24 +145,6 @@ export default function ArtykulPage() {
       }).catch(() => {});
     }).catch(() => {});
   }, [article]);
-
-  useEffect(() => {
-    if (!resolvedImageUrl) return;
-    let ogImage = document.querySelector('meta[property="og:image"]');
-    if (!ogImage) {
-      ogImage = document.createElement('meta');
-      ogImage.setAttribute('property', 'og:image');
-      document.head.appendChild(ogImage);
-    }
-    ogImage.setAttribute('content', resolvedImageUrl);
-    let twitterImage = document.querySelector('meta[name="twitter:image"]');
-    if (!twitterImage) {
-      twitterImage = document.createElement('meta');
-      twitterImage.setAttribute('name', 'twitter:image');
-      document.head.appendChild(twitterImage);
-    }
-    twitterImage.setAttribute('content', resolvedImageUrl);
-  }, [resolvedImageUrl]);
 
   const shareUrls = useMemo(() => {
     if (!article) return null;

@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,7 @@ function formatTime(isoTime: string): string {
 }
 
 export default function HarmonogramKanaluPage() {
+  useSeo({ title: 'Harmonogram kanału', description: 'Zaplanowane wydarzenia na kanale Sportowy Vibe: transmisje na żywo, magazyny i analizy. Sprawdź, co nas czeka.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();

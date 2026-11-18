@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import EditableImage from '@/components/feature/EditableImage';
 import Breadcrumbs from '@/components/feature/Breadcrumbs';
 
 export default function NaszKanalPage() {
+  useSeo({ title: 'Nasz kanał', description: 'Relacje, analizy, transmisje i autorskie formaty. Sportowy Vibe tworzą pasjonaci sportu dla pasjonatów.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [channelNews, setChannelNews] = useState<ChannelNewsItem[]>([]);

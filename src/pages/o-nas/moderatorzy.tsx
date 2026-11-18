@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +18,7 @@ interface Moderator {
 }
 
 export default function ModeratorzyPage() {
+  useSeo({ title: 'Moderatorzy kanału', description: 'Poznaj moderatorów, którzy dbają o przyjazną atmosferę czatu podczas transmisji Sportowy Vibe.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [moderators, setModerators] = useState<Moderator[]>([]);

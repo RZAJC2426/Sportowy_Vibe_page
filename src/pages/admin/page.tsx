@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState } from 'react';
 import EditableImage from '@/components/feature/EditableImage';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
@@ -21,6 +22,7 @@ import EmailTemplatesManager from './components/EmailTemplatesManager';
 type AdminTab = 'dashboard' | 'articles' | 'channel-news' | 'users' | 'disciplines' | 'content' | 'moderators' | 'partners' | 'colors' | 'images' | 'email-templates';
 
 export default function AdminPage() {
+  useSeo({ title: 'Panel administracyjny', noindex: true });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, isAdmin, loading, sessionWarning, sessionExpired, refreshSession } = useAuth();

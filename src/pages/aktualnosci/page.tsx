@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +18,7 @@ import {
 } from '@/data/disciplines';
 
 export default function AktualnosciPage() {
+  useSeo({ title: 'Aktualności sportowe', description: 'Najnowsze artykuły i informacje z dyscyplin sportowych, które pokrywamy, oraz ogłoszenia kanału Sportowy Vibe.' });
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);

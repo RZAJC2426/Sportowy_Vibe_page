@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +23,7 @@ interface Partner {
 }
 
 export default function WspolpracaPage() {
+  useSeo({ title: 'Współpraca', description: 'Partnerzy Sportowy Vibe: organizacje, kluby i marki, z którymi tworzymy sportową treść.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');

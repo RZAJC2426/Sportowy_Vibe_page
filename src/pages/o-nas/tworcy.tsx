@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import Breadcrumbs from '@/components/feature/Breadcrumbs';
 import { usePageVisit } from '@/hooks/useLikes';
 
 export default function TworcyPage() {
+  useSeo({ title: 'Twórcy', description: 'Poznaj ludzi stojących za Sportowy Vibe: ich pasje, role i to, co sprawia, że razem tworzą kanał.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
 

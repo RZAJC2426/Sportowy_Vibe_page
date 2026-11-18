@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -29,6 +30,7 @@ function ScrollToTop() {
 }
 
 export default function PrivacyPolicyPage() {
+  useSeo({ title: 'Polityka prywatności', description: 'Zasady przetwarzania danych osobowych w serwisie Sportowy Vibe.' });
   const navigate = useNavigate();
   const { i18n } = useTranslation('common');
   const isPL = i18n.language === 'pl';

@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
@@ -35,6 +36,7 @@ async function callEdgeFunction(name: string, body: Record<string, unknown>) {
 }
 
 export default function ResetHaslaPage() {
+  useSeo({ title: 'Reset hasła', noindex: true });
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');

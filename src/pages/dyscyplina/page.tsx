@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -202,6 +203,11 @@ export default function DyscyplinaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [heroAnim, setHeroAnim] = useState(false);
+  useSeo({
+    title: data ? `${data.name}: najnowsze artykuły` : undefined,
+    description: data ? (data.description || `Najnowsze artykuły, wyniki i analizy z dyscypliny: ${data.name}. Sportowy Vibe.`) : undefined,
+    image: data?.heroImage ?? data?.cardImage ?? undefined,
+  });
 
   usePageVisit(slug ? `/dyscyplina/${slug}` : '');
 

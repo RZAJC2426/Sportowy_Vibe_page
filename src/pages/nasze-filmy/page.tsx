@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -103,6 +104,7 @@ type FilterTab = 'wszystko' | 'FILM' | 'SHORTS' | 'LIVE';
 type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'popular';
 
 export default function NaszeFilmyPage() {
+  useSeo({ title: 'Nasze filmy', description: 'Filmy, shorty i transmisje z kanału Sportowy Vibe na YouTube. Wszystko w jednym miejscu.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
 

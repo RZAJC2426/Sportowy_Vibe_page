@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +37,7 @@ async function callEdgeFunction(name: string, body: Record<string, unknown>) {
 }
 
 export default function WeryfikacjaEmailPage() {
+  useSeo({ title: 'Weryfikacja adresu e-mail', noindex: true });
   const { t } = useTranslation('common');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

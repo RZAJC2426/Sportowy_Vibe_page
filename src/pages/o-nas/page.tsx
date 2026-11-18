@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TopBar from '@/pages/home/components/TopBar';
@@ -9,6 +10,7 @@ import Breadcrumbs from '@/components/feature/Breadcrumbs';
 import { usePageVisit } from '@/hooks/useLikes';
 
 export default function ONasPage() {
+  useSeo({ title: 'O nas', description: 'Poznaj ludzi, historię i partnerów stojących za Sportowy Vibe. Dwa głosy, jedna pasja, zero limitów.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
 

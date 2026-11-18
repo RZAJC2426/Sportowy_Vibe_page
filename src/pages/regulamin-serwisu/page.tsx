@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -29,6 +30,7 @@ function ScrollToTop() {
 }
 
 export default function TermsOfServicePage() {
+  useSeo({ title: 'Regulamin serwisu', description: 'Regulamin korzystania z serwisu Sportowy Vibe.' });
   const navigate = useNavigate();
   const { i18n } = useTranslation('common');
   const isPL = i18n.language === 'pl';

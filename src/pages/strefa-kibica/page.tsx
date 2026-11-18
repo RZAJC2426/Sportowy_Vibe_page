@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import EditableImage from '@/components/feature/EditableImage';
 import Breadcrumbs from '@/components/feature/Breadcrumbs';
 
 export default function StrefaKibicaPage() {
+  useSeo({ title: 'Strefa kibica', noindex: true });
   const { t } = useTranslation('common');
   const { user, profile } = useAuth();
   const { theme, toggleTheme } = useTheme();

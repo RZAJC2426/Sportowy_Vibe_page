@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -69,6 +70,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 export default function UstawieniaKontaPage() {
+  useSeo({ title: 'Ustawienia konta', noindex: true });
   const { t } = useTranslation('common');
   const { user, profile, signOut, hardSignOut, updateUserProfile, deleteAccount, changePassword, changeUsername, hasWebAuthn, registerWebAuthn, removeWebAuthn, sendVerificationCode, verifyCode, verifyCodeAndChangePassword, totpEnabled, setupTOTP, verifyTOTPSetup, disableTOTP, twilioConfigured } = useAuth();
   const navigate = useNavigate();

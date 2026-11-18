@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchChannelNewsById, fetchAllChannelNews, type ChannelNewsItem } from '@/data/disciplines';
 import { useEffect, useState } from 'react';
@@ -15,6 +16,7 @@ export default function AktualnoscKanaluPage() {
 
   const { id } = useParams<{ id: string }>();
   const [news, setNews] = useState<ChannelNewsItem | null>(null);
+  useSeo({ title: news?.title, description: news?.description });
   const [allNews, setAllNews] = useState<ChannelNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 

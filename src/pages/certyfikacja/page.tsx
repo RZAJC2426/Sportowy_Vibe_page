@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ const BENEFIT_ICONS = [
 const CERT_SVG_URL = 'https://storage.readdy-site.link/project_files/6b577641-b4ea-4107-bb56-5f8fbbf97e07/2b55db67-77b9-4e27-9f52-71dae827bcde_Certyfikat_Sport_Bez_Barier_Logos_Final.svg';
 
 export default function CertyfikacjaPage() {
+  useSeo({ title: 'Certyfikacja obiektów sportowych', description: 'Oficjalne potwierdzenie, że stadion, hala lub arena spełnia międzynarodowe standardy dostępności.' });
   const navigate = useNavigate();
   const { t } = useTranslation();
 

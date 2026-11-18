@@ -1,3 +1,4 @@
+import { useSeo } from '@/hooks/useSeo';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TopBar from '@/pages/home/components/TopBar';
@@ -21,6 +22,7 @@ const EVENT_ICONS = [
 ];
 
 export default function HistoriaPage() {
+  useSeo({ title: 'Historia kanału', description: 'Historia Sportowy Vibe krok po kroku: od kryzysu przez innowacje aż do miliona odsłon.' });
   const { t } = useTranslation();
   const navigate = useNavigate();
 
